@@ -1,11 +1,10 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-import os
-import sys
-
 """
 Markdown2HTML, generates an HTML file from a Markdown file.
 """
+import os
+import sys
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(
