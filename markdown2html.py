@@ -55,16 +55,16 @@ def transform_unordered_lists(file):
         if match:
             if not inside_list:
                 inside_list = True
-                result = "<ul>\n" + result
-
-        if not match:
+                result = "<ul>\n" + line
+        elif not match:
             if inside_list:
                 inside_list = False
                 result = "</ul>\n" + line
-        elif index == len(split) - 1:
+
+        if index == len(split) - 1:
             if inside_list:
                 inside_list = False
-                result = line + "\n</ul>"
+                result = result + "\n</ul>"
 
         converted += result + '\n'
     converted = converted.replace('<uli>', '<li>')
