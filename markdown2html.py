@@ -22,6 +22,7 @@ def read_file(file):
         f.close()
 
     converted = transform_unordered_lists(converted)
+    converted = transform_ordered_lists(converted)
 
     with open("{}".format(sys.argv[2]), 'w') as f:
         f.write(converted)
@@ -34,7 +35,12 @@ def transform(line):
     match = re.search("^(\s{0,4}-\s)(.*)", line)
     if match:
         content = transform(match.group(2))
-        result = list_element(content)
+        result = unordered_list_element(content)
+
+    match = re.search("^(\s{0,4}\*\s)(.*)", line)
+    if match:
+        content = transform(match.group(2))
+        result = ordered_list_element(content)
 
     match = re.search("^(#{1,6})\s(.*)", line)
     if match:
@@ -49,7 +55,6 @@ def transform_unordered_lists(file):
     split = file.splitlines()
 
     for index, line in enumerate(split):
-
         result = line
         match = re.search("<uli>(.*)</uli>", line)
         if match:
@@ -72,12 +77,42 @@ def transform_unordered_lists(file):
 
     return converted
 
+def transform_ordered_lists(file):
+    converted = ""
+    inside_list = False
+    split = file.splitlines()
+
+    for index, line in enumerate(split):
+        result = line
+        match = re.search("<oli>(.*)</oli>", line)
+        if match:
+            if not inside_list:
+                inside_list = True
+                result = "<ol>\n" + line
+        elif not match:
+            if inside_list:
+                inside_list = False
+                result = "</ol>\n" + line
+
+        if index == len(split) - 1:
+            if inside_list:
+                inside_list = False
+                result = result + "\n</ol>"
+
+        converted += result + '\n'
+    converted = converted.replace('<oli>', '<li>')
+    converted = converted.replace('</oli>', '</li>')
+
+    return converted
 
 def header(line, header_level):
     return "<h{}>{}</h{}>".format(header_level, line, header_level)
 
-def list_element(line):
+def unordered_list_element(line):
     return "<uli>{}</uli>".format(line)
+
+def ordered_list_element(line):
+    return "<oli>{}</oli>".format(line)
 
 
 if __name__ == "__main__":
