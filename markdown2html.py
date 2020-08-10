@@ -16,38 +16,47 @@ def read_file(file):
                 converted += '\n'
                 continue
 
-            result = transform(line)
+            result = transform(line, False)
             if result:
                 converted += result + '\n'
         f.close()
 
     converted = transform_unordered_lists(converted)
     converted = transform_ordered_lists(converted)
+    converted = transform_paragraph_elements(converted)
 
     with open("{}".format(sys.argv[2]), 'w') as f:
         f.write(converted)
         f.close()
 
 
-def transform(line):
-    result = line
+def transform(line, inside: bool):
+    found = False
+    result = line.rstrip()
 
     match = re.search("^(\s{0,4}-\s)(.*)", line)
     if match:
-        content = transform(match.group(2))
+        found = True
+        content = transform(match.group(2), True)
         result = unordered_list_element(content)
 
     match = re.search("^(\s{0,4}\*\s)(.*)", line)
     if match:
-        content = transform(match.group(2))
+        found = True
+        content = transform(match.group(2), True)
         result = ordered_list_element(content)
 
     match = re.search("^(#{1,6})\s(.*)", line)
     if match:
+        found = True
         header_level = len(match.group(1))
         result = header(match.group(2), header_level)
 
-    return result
+    if found or inside:
+        return result
+    else:
+        return paragraph_element(result)
+
 
 def transform_unordered_lists(file):
     converted = ""
@@ -97,11 +106,41 @@ def transform_ordered_lists(file):
         if index == len(split) - 1:
             if inside_list:
                 inside_list = False
-                result = result + "\n</ol>"
+                result += "\n</ol>"
 
         converted += result + '\n'
     converted = converted.replace('<oli>', '<li>')
     converted = converted.replace('</oli>', '</li>')
+
+    return converted
+
+def transform_paragraph_elements(file):
+    converted = ""
+    inside_paragraph = False
+    split = file.splitlines()
+
+    for index, line in enumerate(split):
+        result = line
+        match = re.search("<pe>(.*)</pe>", line)
+        if match:
+            if not inside_paragraph:
+                inside_paragraph = True
+                result = "<p>\n" + line
+            if index < len(split) - 1 and re.search("<pe>(.*)</pe>", split[index + 1]):
+                result = "{}<br/>".format(result)
+        elif not match:
+            if inside_paragraph:
+                inside_paragraph = False
+                result = "</p>\n" + line
+
+        if index == len(split) - 1:
+            if inside_paragraph:
+                inside_paragraph = False
+                result +="\n</p>"
+
+        converted += result + '\n'
+    converted = converted.replace('<pe>', '')
+    converted = converted.replace('</pe>', '')
 
     return converted
 
@@ -113,6 +152,9 @@ def unordered_list_element(line):
 
 def ordered_list_element(line):
     return "<oli>{}</oli>".format(line)
+
+def paragraph_element(line):
+    return "<pe>{}</pe>".format(line)
 
 
 if __name__ == "__main__":
