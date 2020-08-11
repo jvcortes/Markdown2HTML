@@ -2,6 +2,7 @@
 """
 Markdown2HTML, generates an HTML file from a Markdown file.
 """
+import hashlib
 import os
 import re
 import sys
@@ -66,6 +67,8 @@ def format_text(line):
     result = line
     result = re.sub("\*\*(.*?)\*\*", r"<b>\1</b>", result)
     result = re.sub("__(.*?)__", r"<em>\1</em>", result)
+    result = re.sub("\[\[(.*?)\]\]", lambda match: hashlib.md5(match.group(1).encode()).hexdigest(), result)
+    result = re.sub("\(\((.*?)\)\)", lambda match: match.group(1).replace('c', '').replace('C', ''), result)
 
     return result
 
