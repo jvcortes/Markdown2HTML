@@ -6,6 +6,7 @@ import os
 import re
 import sys
 
+
 def read_file(file):
     converted = ""
 
@@ -18,7 +19,9 @@ def read_file(file):
 
             result = transform(line, False)
             if result:
+                result = format_text(result)
                 converted += result + '\n'
+
         f.close()
 
     converted = transform_unordered_lists(converted)
@@ -56,6 +59,15 @@ def transform(line, inside: bool):
         return result
     else:
         return paragraph_element(result)
+
+
+def format_text(line):
+
+    result = line
+    result = re.sub("\*\*(.*?)\*\*", r"<b>\1</b>", result)
+    result = re.sub("__(.*?)__", r"<em>\1</em>", result)
+
+    return result
 
 
 def transform_unordered_lists(file):
